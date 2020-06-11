@@ -1,0 +1,48 @@
+from sqlalchemy import create_engine
+from sqlalchemy import Column,String,Integer,Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+#初始化数据库连接
+engine = create_engine('mysql+mysqlconnector://root:cwy123456@localhost:3306/exercise')
+
+#创建对象基类：
+Base = declarative_base()
+
+#定义Player对象
+class Player(Base):
+    # 表的名字
+    __tablename__ = 'player'
+
+    #表的结构：
+    player_id = Column(Integer,primary_key=True,autoincrement=True)
+    team_id = Column(Integer)
+    player_name = Column(String(255))
+    height = Column(Float(3,2))
+
+#创建DBSession类型：
+DBSession = sessionmaker(bind=engine)
+#创建session对象：
+session = DBSession()
+
+'''
+#创建player对象：
+new_player = Player(team_id=1003,player_name="约翰-柯林斯",height=2.08)
+#添加到session：
+session.add(new_player)
+'''
+
+#增加to_dict()方法到Base类中
+def to_dict(self):
+    return {c.name:getattr(self,c.name,None)
+            for c in self.__table__.columns}
+#将对象可以转化为dict类型
+Base.to_dict = to_dict
+#查询身高>=2.08的球员有哪些
+rows = session.query(Player).filter(Player.height >= 2.08).all()
+print([row.to_dict() for row in rows])
+
+#提交即保存到数据库：
+session.commit()
+#关闭session：
+session.close()
